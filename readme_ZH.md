@@ -51,48 +51,230 @@ python3 -m http.server 8780 --bind 127.0.0.1
 `48 万元 [1]` → 引用/来源 → 图谱高亮 → 「预录结束」。没有 `/api/*` 请求，
 没有模型端点，不需要 Key。分发时也可以直接用 `pcmem-static-demo.zip`。
 
-## 快速开始
+## 最快演示（不用构建）
 
+答辩或课堂演示请先走这两条，不需要 PostgreSQL、模型或 API Key：
 
-要求：
+- **录屏**：`recordings/pcmem-demo-live.mp4`，34 秒、1440×900、无音轨。内容是
+  live 页面上的节点卡片、边卡片、预设预算问题、真实检索轨迹、带引用的回答和
+  来源卡片；播放视频不会调用任何服务。
+- **静态预录版**：同目录的 `pcmem-static-demo/`（或 `pcmem-static-demo.zip`）。
+  版头明确写着「静态预录演示 · 固定快照 · 不调用模型 · 无需 API Key」；新增的
+  「▶ 播放预录演示」按钮会播放固定问题 → 预录轨迹 → 回答 → 来源。
+  macOS / Linux / WSL 用 `python3 -m http.server 8780 --bind 127.0.0.1`，
+  Windows 原生用 `py -m http.server 8780 --bind 127.0.0.1`，双击
+  `index.html` 也可以。两条路径都没有 `/api/*` 请求、没有模型端点、没有 Key。
 
-- Python 3.11+；`personal-agent/.venv` 已经建好（`uv sync --extra openai`，
-  需要 `openai` 包来访问 OpenAI 兼容端点；docx/xlsx 解析依赖 dev 组）。
-- PostgreSQL 16–18 + pgvector。macOS 可以用：
+只有需要**重建图谱**或**问新问题**时，才需要下面的 live 构建。
 
-  ```bash
-  brew install postgresql@17 pgvector
-  ```
+## personal-agent 必须放在哪
 
-  `run.sh` 会自动在 `PATH` 里找 Homebrew / Postgres.app 的 `initdb`、`pg_ctl`。
-  Linux 上只要 `initdb`、`pg_ctl`、`psql` 在 `PATH` 里即可。
-- 一个 OpenAI 兼容的模型端点（DeepSeek、SiliconFlow、OpenAI、自建 vLLM 等）。
+live demo 依赖**同级**的 `personal-agent` 仓库根目录：
 
-启动：
-
-```bash
-./run.sh
-# PC-Mem demo: http://127.0.0.1:8770/
+```text
+workspace/
+├── personal-agent/        ← 仓库根目录，不是 src 的拷贝
+│   ├── src/sci_rag/
+│   ├── domain-personal/
+│   ├── scripts/local_postgres.py
+│   ├── pyproject.toml
+│   └── .venv/             ← `uv sync` 在这里创建
+└── pcmem-demo/            ← 本仓库
 ```
 
-第一次启动时，演示会在 `.state/pgdata/` 建一个**独立的** PostgreSQL 实例
-（127.0.0.1:5544，库名 `pcmem_demo`），不会碰仓库默认的 5433。随后打开浏览器：
+**必须把 `personal-agent` 放在 `pcmem-demo` 旁边，不能放进 `pcmem-demo` 里面。**
+默认路径写死在两处：
 
-1. 右上角「模型设置」：填 Base URL、API Key、回答模型、抽取模型；点
-   「保存并测试连接」。
-2. 如果 `.state/` 里已经有构建好的演示数据库（本机交付时通常有），直接看图谱、
-   提问题即可。
-3. 想现场重建：点「重建图谱」，面板会显示真实的 ingest、版本链、项目归属、
-   引用、抽取阶段。全量约 2–3 分钟，取决于模型速度。社区摘要默认跳过
-   （勾选后每个社区一次模型调用，最多再等 120 秒）。
+- `pcmem_demo/paths.py` → `../personal-agent/src`
+- `run.sh` → `../personal-agent/.venv/bin/python`
+- `ensure_postgres()` → `../personal-agent/scripts/local_postgres.py`
+- 本体和提示词 → `../personal-agent/domain-personal/`
 
-停止：`Ctrl-C`。只停 Web 服务、保留数据库可以；彻底停数据库：
+如果确实不能同级，启动前设置：
 
 ```bash
+# macOS / Linux / WSL
+export PCMEM_DEMO_REPO=/absolute/path/to/personal-agent
+export PCMEM_DEMO_PY=/absolute/path/to/personal-agent/.venv/bin/python
+```
+
+```powershell
+# native Windows PowerShell
+$env:PCMEM_DEMO_REPO = "C:\work\personal-agent"
+$env:PCMEM_DEMO_PY   = "C:\work\personal-agent\.venv\Scripts\python.exe"
+```
+
+`run.sh` 和 Python CLI 都认这两个变量。`tools/package_bundle.sh` 生成的便携包
+已经排好同级结构，解压后不要拆开。**只复制 `pcmem-demo` 而不放
+`personal-agent`，live demo 一定起不来。**
+
+## 本地构建（live demo）
+
+共同要求：
+
+- `uv` + Python 3.11–3.12（uv 可以安装 Python）。
+- PostgreSQL 16–18 + **pgvector** 扩展。
+- 一个 OpenAI 兼容的 chat 端点。向量层使用仓库自带的离线 `local-hash`，
+  所以**不需要 embedding key**。
+- `personal-agent` 按上一节放在同级。
+
+demo 会在 `.state/pgdata/` 自建一个独立的 PostgreSQL 集群（端口 5544），
+不会碰仓库的 `.env` 或默认 5433 数据库。HTTP 端口 8770。端口可用
+`PCMEM_DEMO_PORT` / `PCMEM_DEMO_PG_PORT` 覆盖。
+
+### macOS（已实测）
+
+```bash
+brew install uv postgresql@17 pgvector
+
+# 两个仓库保持同级
+cd personal-agent
+uv sync --extra openai       # dev 组里有 docx/xlsx 解析依赖
+
+cd ../pcmem-demo
+./run.sh
+# http://127.0.0.1:8770/
+```
+
+`run.sh` 会自动找 Homebrew 的 `initdb` / `pg_ctl`。如果装在非标准位置：
+
+```bash
+export PATH="$(brew --prefix postgresql@17)/bin:$PATH"
+```
+
+### Linux
+
+安装 `uv`、PostgreSQL 16–18 和对应版本的 pgvector。包名随发行版不同；
+Ubuntu/Debian 使用 PGDG 仓库时通常是：
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+sudo apt install postgresql-17 postgresql-17-pgvector
+export PATH="/usr/lib/postgresql/17/bin:$PATH"
+```
+
+如果发行版没有给这个 PostgreSQL 大版本打包 pgvector，可以用 conda-forge：
+
+```bash
+conda install -c conda-forge "postgresql>=16,<19" pgvector
+```
+
+确认四个工具都在 `PATH` 里：
+
+```bash
+initdb --version && pg_ctl --version && psql --version && createdb --version
+```
+
+然后保持两个仓库同级：
+
+```bash
+cd personal-agent
+uv sync --extra openai
+
+cd ../pcmem-demo
+./run.sh
+```
+
+demo 的数据库以当前用户身份运行，不需要 `sudo`；只有安装软件包需要 root。
+Fedora / Arch 的包名不同（通常是 `postgresql-server`、`postgresql`、`pgvector`），
+但 PATH 检查和启动命令一样。
+
+> macOS 已实测；Linux 走的是同一个 `scripts/local_postgres.py` 和同一套
+> `uv sync`，最可能变化的是 PostgreSQL 包名和带版本号的 `bin` 目录。
+
+### Windows
+
+#### 推荐：WSL2 + Ubuntu
+
+```powershell
+wsl --install -d Ubuntu
+```
+
+进入 WSL 后按上面的 Linux 步骤操作。把两个仓库放在 WSL 家目录（例如
+`~/work/personal-agent` 和 `~/work/pcmem-demo`），保持同级；从 WSL 启动后，
+在 Windows 浏览器打开 `http://127.0.0.1:8770/` 即可（WSL2 会转发 localhost）。
+这条路线避开原生 pgvector 的编译/二进制问题，最省事。
+
+#### 原生 Windows（进阶）
+
+`run.sh` 是 Bash 脚本，原生 Windows 直接用 Python CLI。需要：
+
+1. 安装 `uv`：
+
+   ```powershell
+   winget install --id=astral-sh.uv -e
+   ```
+
+2. 安装 PostgreSQL 16/17 **和同版本的 pgvector**（原生 pgvector 可能需要
+   预编译二进制；拿不到就用 WSL2）。把例如
+   `C:\Program Files\PostgreSQL\17\bin` 加入 `PATH`，确认：
+
+   ```powershell
+   initdb --version
+   pg_ctl --version
+   psql --version
+   createdb --version
+   ```
+
+3. 两个仓库保持同级：
+
+   ```text
+   C:\work\personal-agent\
+   C:\work\pcmem-demo\
+   ```
+
+4. 建环境并启动：
+
+   ```powershell
+   cd C:\work\personal-agent
+   uv sync --extra openai
+
+   cd C:\work\pcmem-demo
+   ..\personal-agent\.venv\Scripts\python.exe -m pcmem_demo.cli serve --port 8770
+   ```
+
+   或者激活同级 venv，用它的 Python 跑 CLI：
+
+   ```powershell
+   $env:PCMEM_DEMO_REPO = "C:\work\personal-agent"
+   C:\work\personal-agent\.venv\Scripts\Activate.ps1
+   python -m pcmem_demo.cli serve --port 8770
+   ```
+
+   `PCMEM_DEMO_PY` 只给 Bash 的 `run.sh` 用；Python CLI 用的是启动它的解释器。
+
+CLI 会调用同一个 `ensure_postgres()`，在 `.state\pgdata` 建集群，监听 5544；
+不需要 Docker。原生 Windows 上 API Key 文件由账户的 NTFS ACL 保护，而不是
+POSIX `0600`；`.state` 仍然只在本地、且被 git 忽略。
+
+静态版和 MP4 在 Windows 原生环境不需要任何额外依赖：
+
+```powershell
+cd C:\work\pcmem-demo\pcmem-static-demo
+py -m http.server 8780 --bind 127.0.0.1
+# 或者直接双击 index.html
+```
+
+### 启动之后
+
+打开 `http://127.0.0.1:8770/`，右上角「模型设置」填 Base URL、API Key、
+回答模型、抽取模型，点「保存并测试连接」。然后点「重建图谱」：首次约 2–3 分钟，
+社区摘要可选（更慢）。`.state/` 里已有构建好的数据库时可以直接看图谱、提问题。
+
+停止 Web 服务用 `Ctrl-C`；彻底停 demo 数据库：
+
+```bash
+# macOS / Linux / WSL
 ../personal-agent/.venv/bin/python -m pcmem_demo.cli pg-stop
 ```
 
+```powershell
+# native Windows
+..\personal-agent\.venv\Scripts\python.exe -m pcmem_demo.cli pg-stop
+```
+
 ## 演示语料
+
 
 `sample_corpus/` 是一个固定的、仿 Victoria_Subset 的目录树：**14 个当前文档、
 7 种格式、4 个顶层目录、3 个修订版本**。人名、单位、数据均为虚构，文本以
@@ -250,7 +432,11 @@ sample_corpus/
 
 | 现象 | 处理 |
 | --- | --- |
-| `找不到 PostgreSQL 的 initdb/pg_ctl` | 安装 `postgresql@17` + `pgvector`，确认 bin 在 PATH；或装 Postgres.app |
+| `找不到 PostgreSQL 的 initdb/pg_ctl` | macOS 装 `postgresql@17` + `pgvector`（或 Postgres.app）；Linux 把 `/usr/lib/postgresql/17/bin` 加进 PATH；Windows 把 PostgreSQL 的 `bin` 加进 PATH |
+| Linux 没有对应版本的 pgvector | 用 PGDG 仓库、conda-forge，或按 pgvector 官方说明编译 |
+| Windows 原生跑不了 `run.sh` | `run.sh` 是 Bash；用 `python -m pcmem_demo.cli serve`，或走 WSL2 |
+| Windows 原生装不上 pgvector | 推荐 WSL2；或使用与 PostgreSQL 大版本匹配的预编译 pgvector 二进制 |
+| 启动时报 `personal-agent` 不存在 | 放到 `../personal-agent`，或设置 `PCMEM_DEMO_REPO` / `PCMEM_DEMO_PY` |
 | `端口 5544 被占用` | 设 `PCMEM_DEMO_PG_PORT=5545` 后重启；`.state/pgdata` 会沿用 |
 | 模型测试 401/403 | 检查 Base URL 是否以 `/v1` 结尾、模型名是否在该端点可用 |
 | 回答很慢 | 关闭 HyDE（默认已关）；精排约 2–3 秒；首次调用还有网络冷启动 |
