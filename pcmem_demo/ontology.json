@@ -1,0 +1,279 @@
+{
+  "name": "Personal File Space",
+  "description": "A single user's local files (papers, slides, documents, code, data, images, meeting notes, mail exports) and the work history they record.",
+  "entity_types": [
+    {
+      "name": "Person",
+      "description": "A person named in the files (author, recipient, colleague, contact)",
+      "canonical_suffixes": {}
+    },
+    {
+      "name": "Organization",
+      "description": "A company, institution, team, or group the owner works with",
+      "canonical_suffixes": {}
+    },
+    {
+      "name": "Project",
+      "description": "A work unit the owner pursues (research topic, client job, course, long-term task)",
+      "canonical_suffixes": {
+        "项目": 1,
+        " project": 1
+      }
+    },
+    {
+      "name": "Document",
+      "description": "A work artifact discussed inside the text (a report, deck, paper, contract)",
+      "canonical_suffixes": {}
+    },
+    {
+      "name": "Event",
+      "description": "A concrete happening with a date (meeting, deadline, submission, review, trip)",
+      "canonical_suffixes": {}
+    },
+    {
+      "name": "Topic",
+      "description": "A named subject or theme explicitly stated in the text (for facets and filters)",
+      "canonical_suffixes": {}
+    },
+    {
+      "name": "Artifact",
+      "description": "A concrete deliverable or tool (dataset, prototype, slide deck, codebase)",
+      "canonical_suffixes": {}
+    },
+    {
+      "name": "Technology",
+      "description": "A method, framework, model, or tool named as a technique",
+      "canonical_suffixes": {
+        "技术": 4
+      }
+    },
+    {
+      "name": "Place",
+      "description": "A location (city, campus, office, venue)",
+      "canonical_suffixes": {}
+    },
+    {
+      "name": "TimePeriod",
+      "description": "A named span of time (Q3 2025, last spring, the 2026 hiring season)",
+      "canonical_suffixes": {}
+    },
+    {
+      "name": "Metric",
+      "description": "A measured value with meaning (accuracy, budget, revenue, score)",
+      "canonical_suffixes": {}
+    },
+    {
+      "name": "Decision",
+      "description": "A choice that was made, with its rationale or outcome",
+      "canonical_suffixes": {}
+    }
+  ],
+  "relation_types": [
+    {
+      "name": "AUTHORED_BY",
+      "description": "A document or artifact was written by a person or organization",
+      "source_types": [
+        "Document",
+        "Artifact"
+      ],
+      "target_types": [
+        "Person",
+        "Organization"
+      ]
+    },
+    {
+      "name": "MENTIONS",
+      "description": "A document or artifact refers to another entity",
+      "source_types": [],
+      "target_types": []
+    },
+    {
+      "name": "PART_OF",
+      "description": "An entity belongs to a project or event (person to project, artifact to project)",
+      "source_types": [],
+      "target_types": [
+        "Project",
+        "Event"
+      ]
+    },
+    {
+      "name": "PRODUCES",
+      "description": "A person, project, or event yields an artifact, document, or metric",
+      "source_types": [
+        "Person",
+        "Project",
+        "Event"
+      ],
+      "target_types": [
+        "Artifact",
+        "Document",
+        "Metric"
+      ]
+    },
+    {
+      "name": "USES",
+      "description": "A person, project, or artifact relies on a technology, artifact, or place",
+      "source_types": [
+        "Person",
+        "Project",
+        "Artifact"
+      ],
+      "target_types": [
+        "Technology",
+        "Artifact",
+        "Place"
+      ]
+    },
+    {
+      "name": "PRECEDES",
+      "description": "One event or time period happens before another",
+      "source_types": [],
+      "target_types": []
+    },
+    {
+      "name": "SUPERSEDES",
+      "description": "One document replaces another in content (cross-file, judged by text)",
+      "source_types": [],
+      "target_types": []
+    },
+    {
+      "name": "RELATES_TO",
+      "description": "Two entities are related and no sharper relation applies",
+      "source_types": [],
+      "target_types": []
+    },
+    {
+      "name": "LOCATED_IN",
+      "description": "An entity is sited or happens in a place",
+      "source_types": [],
+      "target_types": []
+    },
+    {
+      "name": "HAS_METRIC",
+      "description": "An entity carries a measured value",
+      "source_types": [],
+      "target_types": []
+    },
+    {
+      "name": "DECIDED_IN",
+      "description": "A decision was made in an event or time period",
+      "source_types": [],
+      "target_types": []
+    }
+  ],
+  "query_classes": [
+    {
+      "name": "locating",
+      "keywords": [
+        "file",
+        "find",
+        "where",
+        "latest",
+        "newest",
+        "version",
+        "report",
+        "deck",
+        "notes",
+        "locate",
+        "查找",
+        "最新",
+        "版本",
+        "文件",
+        "报告",
+        "材料"
+      ],
+      "hyde_instruction": "Write as a file index entry would: name the file or document, the project it belongs to, where it lives, and what it contains."
+    },
+    {
+      "name": "project",
+      "keywords": [
+        "project",
+        "belongs",
+        "part",
+        "client",
+        "course",
+        "topic",
+        "working",
+        "about",
+        "项目",
+        "归属",
+        "属于",
+        "课题",
+        "客户"
+      ],
+      "hyde_instruction": "Write as a project dossier would: name the project, its members, its deliverables, and the period it was active."
+    },
+    {
+      "name": "person",
+      "keywords": [
+        "who",
+        "person",
+        "author",
+        "wrote",
+        "meeting",
+        "contact",
+        "colleague",
+        "with",
+        "谁",
+        "人物",
+        "作者",
+        "联系人",
+        "同事"
+      ],
+      "hyde_instruction": "Write as a contact summary would: name the person, their organization, their role, and which documents or events involve them."
+    },
+    {
+      "name": "timeline",
+      "keywords": [
+        "when",
+        "timeline",
+        "history",
+        "last",
+        "ago",
+        "month",
+        "year",
+        "progress",
+        "busy",
+        "时间",
+        "历史",
+        "进展",
+        "时间线",
+        "月份",
+        "年份"
+      ],
+      "hyde_instruction": "Write as a work journal would: give dates, events in order, and what was produced in each period."
+    }
+  ],
+  "retrieval": {
+    "weights": {
+      "vector": 1.5,
+      "keyword": 1.0,
+      "graph": 0.8,
+      "community": 0.6,
+      "hyde": 1.2
+    },
+    "rrf_k": 60,
+    "candidate_limits": {
+      "vector": 20,
+      "keyword": 20,
+      "graph": 20,
+      "community": 5,
+      "hyde": 20
+    },
+    "graph": {
+      "min_confidence": 0.0,
+      "confidence_weighted": false,
+      "include_citations": false
+    },
+    "reranker": {
+      "enabled": false,
+      "adapter": "llm",
+      "pool": 20,
+      "timeout_s": 15.0
+    }
+  },
+  "provenance": {
+    "source": "personal-agent/domain-personal/domain.yaml",
+    "sha256": "e030c98c11bc392e6f34fd4e0ad3e6397dc0536cffc2c22ac0ef656a958ab889"
+  }
+}

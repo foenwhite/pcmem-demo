@@ -1,0 +1,149 @@
+{
+  "name": "PC-Mem 期中演示语料",
+  "note": "固定的合成语料，文本以 CC0 释放；人名、单位与数据均为虚构。邮件与检查点表标为 restricted，用来演示外发权限门。",
+  "documents": [
+    {
+      "path": "远山项目/立项书.md",
+      "title": "远山项目立项书 v2",
+      "date": "2026-03-02",
+      "license": "public",
+      "project": "远山",
+      "authors": [
+        "林舟"
+      ],
+      "history": [
+        {
+          "path": "_history/立项书-v0.md",
+          "title": "远山项目立项书（草案）",
+          "date": "2025-12-18"
+        },
+        {
+          "path": "_history/立项书-v1.md",
+          "title": "远山项目立项书 v1",
+          "date": "2026-01-08"
+        }
+      ]
+    },
+    {
+      "path": "远山项目/中期评审报告.docx",
+      "title": "远山项目中期评审报告",
+      "date": "2026-03-12",
+      "license": "public",
+      "authors": [
+        "林舟",
+        "陈澍",
+        "周岚"
+      ]
+    },
+    {
+      "path": "远山项目/检查点精度表.xlsx",
+      "title": "远山检查点精度表",
+      "date": "2026-03-09",
+      "license": "restricted",
+      "authors": [
+        "陈澍"
+      ]
+    },
+    {
+      "path": "远山项目/点云拼接工具.py",
+      "title": "点云拼接工具说明",
+      "date": "2026-02-20",
+      "license": "public",
+      "authors": [
+        "陈澍"
+      ]
+    },
+    {
+      "path": "远山项目/测量数据集-v3-说明.md",
+      "title": "远山测量数据集 v3 说明",
+      "date": "2026-04-20",
+      "license": "public",
+      "authors": [
+        "陈澍"
+      ]
+    },
+    {
+      "path": "远山项目/技术路线变更决定.md",
+      "title": "远山技术路线变更决定",
+      "date": "2026-02-14",
+      "license": "public",
+      "authors": [
+        "林舟"
+      ]
+    },
+    {
+      "path": "河图项目/立项书.md",
+      "title": "河图项目立项书",
+      "date": "2026-02-10",
+      "license": "public",
+      "project": "河图",
+      "authors": [
+        "高原"
+      ]
+    },
+    {
+      "path": "河图项目/古籍地图索引说明.md",
+      "title": "古籍地图索引说明",
+      "date": "2026-04-05",
+      "license": "public",
+      "authors": [
+        "高原",
+        "周岚"
+      ]
+    },
+    {
+      "path": "河图项目/OCR试点抽样.csv",
+      "title": "河图 OCR 试点抽样",
+      "date": "2026-03-20",
+      "license": "public",
+      "authors": [
+        "高原"
+      ]
+    },
+    {
+      "path": "会议/2026-03-12 远山中期评审纪要.txt",
+      "title": "远山中期评审会议纪要",
+      "date": "2026-03-12",
+      "license": "public",
+      "authors": [
+        "周岚"
+      ]
+    },
+    {
+      "path": "会议/2026-04-02 双周会纪要.md",
+      "title": "2026-04-02 双周会纪要",
+      "date": "2026-04-02",
+      "license": "public",
+      "authors": [
+        "周岚"
+      ]
+    },
+    {
+      "path": "会议/2026-03-18 远山矿业预算确认.eml",
+      "title": "关于远山项目预算与范围的确认",
+      "date": "2026-03-18",
+      "license": "restricted",
+      "authors": [
+        "张工"
+      ]
+    },
+    {
+      "path": "个人/周岚工作记录.md",
+      "title": "周岚工作记录",
+      "date": "2026-04-25",
+      "license": "public",
+      "authors": [
+        "周岚"
+      ]
+    },
+    {
+      "path": "个人/林舟简介.md",
+      "title": "林舟简介",
+      "date": "2026-01-05",
+      "license": "public",
+      "authors": [
+        "林舟"
+      ]
+    }
+  ]
+}

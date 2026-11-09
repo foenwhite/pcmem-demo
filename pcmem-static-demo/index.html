@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>PC-Mem · 静态预录演示（固定快照）</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <div class="static-banner" role="note" aria-label="静态预录说明">
+    <span class="static-tag">STATIC</span>
+    <div class="static-main">
+      <strong>静态预录演示 · 固定快照 · 不调用模型 · 无需 API Key</strong>
+      <span class="static-sub" id="bannerSub">本页是本地演示服务的一次性只读快照；问答为预录脚本</span>
+    </div>
+    <button class="static-more" id="snapshotInfoBtn">快照说明</button>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">◈</div>
+      <div class="brand-text">
+        <strong>PC-Mem</strong>
+        <span>文件空间知识图谱 · 期中演示（静态版）</span>
+      </div>
+    </div>
+    <div class="status static" id="status" aria-live="polite">
+      <span class="status-dot"></span>
+      <span id="statusText">载入快照…</span>
+    </div>
+    <div class="top-actions">
+      <button class="ghost" id="railToggle" title="显示/隐藏资料树" aria-label="显示资料树">☰</button>
+      <button class="ghost unavailable" id="buildBtn" aria-disabled="true" title="静态版不可用：没有后端与模型"><span class="icon">🔒</span> 重建图谱</button>
+      <button class="primary unavailable" id="settingsBtn" aria-disabled="true" title="静态版不可用：没有后端与 API Key"><span class="icon">🔒</span> 模型设置</button>
+    </div>
+  </header>
+
+  <div class="layout" id="layout">
+    <aside class="rail" id="rail" aria-label="资料树">
+      <div class="rail-head">
+        <div>
+          <div class="eyebrow">FILES · 快照</div>
+          <h2>资料树</h2>
+        </div>
+        <span class="count-pill" id="docCount">—</span>
+      </div>
+      <div class="project-chips" id="projectChips"></div>
+      <div class="rail-scroll" id="docTree">
+        <div class="loading">正在读取快照…</div>
+      </div>
+      <div class="rail-foot">
+        <label class="switch">
+          <input type="checkbox" id="showSuperseded">
+          <span>显示已失效版本</span>
+        </label>
+        <p class="hint">只有“当前版本”会进入检索、图谱与回答。旧版本的文字留在库里，但所有读取路径都会排除它。静态版里这条规则来自快照，不会被重新计算。</p>
+      </div>
+    </aside>
+
+    <main class="stage" id="stage">
+      <div class="stage-tabs" role="tablist" aria-label="视图">
+        <button class="tab active" data-view="graph" role="tab" aria-selected="true">概念图谱</button>
+        <button class="tab" data-view="timeline" role="tab" aria-selected="false">版本与时间线</button>
+        <button class="tab" data-view="communities" role="tab" aria-selected="false">社区摘要</button>
+        <div class="stage-tools">
+          <input id="entitySearch" type="search" placeholder="查找实体…" autocomplete="off" aria-label="查找实体">
+          <button class="ghost small" id="clearHighlight" hidden>清除高亮</button>
+        </div>
+      </div>
+
+      <div class="stage-body">
+        <canvas id="graphCanvas" aria-label="概念图谱画布"></canvas>
+
+        <div class="graph-empty" id="graphEmpty" hidden>
+          <div class="empty-mark">◌</div>
+          <h3>快照里没有图谱</h3>
+          <p>这份静态页面只回放已抓取的快照；要重建图谱请用原演示（需要后端与模型）。</p>
+        </div>
+
+        <div class="graph-legend" id="graphLegend"></div>
+        <div class="graph-hint" id="graphHint">拖拽节点 · 滚轮缩放 · 点击节点或边查看详情</div>
+        <div class="graph-tooltip" id="graphTooltip" hidden></div>
+
+        <section class="detail-panel" id="detailPanel" hidden aria-label="实体与证据详情">
+          <button class="icon-btn close" id="detailClose" aria-label="关闭">×</button>
+          <div id="detailBody"></div>
+        </section>
+
+        <section class="timeline-view" id="timelineView" hidden></section>
+        <section class="communities-view" id="communitiesView" hidden></section>
+      </div>
+    </main>
+
+    <aside class="askpanel" aria-label="问答">
+      <div class="ask-head">
+        <div>
+          <div class="eyebrow">ASK · 预录</div>
+          <h2>向资料提问</h2>
+        </div>
+        <span class="mode-pill" id="modePill">预录脚本 · 固定轨迹 · 带证据</span>
+      </div>
+
+      <div class="examples" id="examples"></div>
+
+      <div class="question-wrap">
+        <textarea id="question" rows="2" placeholder="例如：远山项目的预算总额是多少？" aria-label="问题"></textarea>
+        <div class="question-meta">
+          <span>静态版不接模型：点下方「▶ 播放预录演示」</span>
+          <span id="questionCount">0/500</span>
+        </div>
+      </div>
+
+      <div class="ask-options">
+        <label class="switch compact" title="静态版不可用：选项固定">
+          <input type="checkbox" id="externalOnly" checked disabled>
+          <span>仅外发资料 <em>public / open_commercial</em></span>
+        </label>
+        <label class="switch compact" title="静态版不可用：选项固定">
+          <input type="checkbox" id="useHyde" disabled>
+          <span>HyDE <em>预录关闭</em></span>
+        </label>
+        <select id="projectFilter" aria-label="项目范围">
+          <option value="">全部项目</option>
+        </select>
+      </div>
+
+      <div class="play-row">
+        <button class="play" id="playBtn">▶ 播放预录演示</button>
+        <span class="play-hint">固定脚本 · 约 5 秒 · 全程离线</span>
+      </div>
+
+      <div class="ask-actions">
+        <button class="primary unavailable" id="askBtn" aria-disabled="true" title="静态版不调用模型">提问</button>
+        <button class="ghost unavailable" id="stopBtn" aria-disabled="true" title="没有正在运行的请求">停止</button>
+        <span class="ask-state" id="askState">就绪</span>
+      </div>
+
+      <div class="ask-scroll" id="askScroll">
+        <div class="answer" id="answerBox" aria-live="polite">
+          <div class="answer-placeholder" id="answerPlaceholder">
+            <p>这是<strong>静态快照</strong>：资料、图谱、时间线与社区摘要都来自一次抓取，页面不连后端、不调用模型、不需要 API Key。</p>
+            <p class="muted">点「▶ 播放预录演示」看一段事先录好的问答：固定问题 → 预录检索轨迹 → 逐字回答 → 引用与来源 → 图谱高亮，结束时给出“预录结束”。</p>
+          </div>
+        </div>
+        <div class="trace-box" id="traceBox"></div>
+        <div class="sources" id="sourcesBox"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Snapshot info -->
+<div class="modal-backdrop" id="snapshotModal" hidden>
+  <div class="modal snapshot-modal" role="dialog" aria-modal="true" aria-labelledby="snapshotTitle">
+    <div class="modal-head">
+      <div>
+        <div class="eyebrow">SNAPSHOT</div>
+        <h2 id="snapshotTitle">这份页面是什么</h2>
+      </div>
+      <button class="icon-btn close" data-close="snapshotModal" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="security-note">
+        <strong>静态预录 · 固定快照 · 不调用模型 · 无需 API Key</strong>
+        <span>没有后端进程，没有 <code>/api/*</code> 请求，没有模型端点，也没有任何密钥。整份站点只有 4 个页面文件加一个本地 favicon：<code>index.html</code>、<code>styles.css</code>、<code>app.js</code>、<code>snapshot.js</code>、<code>favicon.svg</code>。</span>
+      </div>
+      <div class="snap-table" id="snapshotBody"></div>
+      <p class="fineprint">想看真实构建、真实检索与真实回答，请运行原演示：<code>pcmem-demo/run.sh</code> → <code>http://127.0.0.1:8770/</code>。</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="snapshot.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

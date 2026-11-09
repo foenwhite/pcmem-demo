@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>PC-Mem · 期中演示</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">◈</div>
+      <div class="brand-text">
+        <strong>PC-Mem</strong>
+        <span>文件空间知识图谱 · 期中演示</span>
+      </div>
+    </div>
+    <div class="status" id="status" aria-live="polite">
+      <span class="status-dot"></span>
+      <span id="statusText">载入中…</span>
+    </div>
+    <div class="top-actions">
+      <button class="ghost" id="railToggle" title="显示/隐藏资料树" aria-label="显示资料树">☰</button>
+      <button class="ghost" id="buildBtn"><span class="icon">↻</span> 重建图谱</button>
+      <button class="primary" id="settingsBtn"><span class="icon">⚙</span> 模型设置</button>
+    </div>
+  </header>
+
+  <div class="layout" id="layout">
+    <aside class="rail" id="rail" aria-label="资料树">
+      <div class="rail-head">
+        <div>
+          <div class="eyebrow">FILES</div>
+          <h2>资料树</h2>
+        </div>
+        <span class="count-pill" id="docCount">—</span>
+      </div>
+      <div class="project-chips" id="projectChips"></div>
+      <div class="rail-scroll" id="docTree">
+        <div class="loading">正在读取资料…</div>
+      </div>
+      <div class="rail-foot">
+        <label class="switch">
+          <input type="checkbox" id="showSuperseded">
+          <span>显示已失效版本</span>
+        </label>
+        <p class="hint">只有“当前版本”会进入检索、图谱与回答。旧版本的文字留在库里，但所有读取路径都会排除它。</p>
+      </div>
+    </aside>
+
+    <main class="stage" id="stage">
+      <div class="stage-tabs" role="tablist" aria-label="视图">
+        <button class="tab active" data-view="graph" role="tab" aria-selected="true">概念图谱</button>
+        <button class="tab" data-view="timeline" role="tab" aria-selected="false">版本与时间线</button>
+        <button class="tab" data-view="communities" role="tab" aria-selected="false">社区摘要</button>
+        <div class="stage-tools">
+          <input id="entitySearch" type="search" placeholder="查找实体…" autocomplete="off" aria-label="查找实体">
+          <button class="ghost small" id="clearHighlight" hidden>清除高亮</button>
+        </div>
+      </div>
+
+      <div class="stage-body">
+        <canvas id="graphCanvas" aria-label="概念图谱画布"></canvas>
+
+        <div class="graph-empty" id="graphEmpty" hidden>
+          <div class="empty-mark">◌</div>
+          <h3>还没有可以画的东西</h3>
+          <p>先在设置里填入模型 API，然后重建一次图谱。没有模型时也可以只建立文件与版本结构。</p>
+          <button class="primary" id="graphEmptyBuild">打开构建面板</button>
+        </div>
+
+        <div class="graph-legend" id="graphLegend"></div>
+        <div class="graph-hint" id="graphHint">拖拽节点 · 滚轮缩放 · 点击节点或边查看详情</div>
+        <div class="graph-tooltip" id="graphTooltip" hidden></div>
+
+        <section class="detail-panel" id="detailPanel" hidden aria-label="实体与证据详情">
+          <button class="icon-btn close" id="detailClose" aria-label="关闭">×</button>
+          <div id="detailBody"></div>
+        </section>
+
+        <section class="timeline-view" id="timelineView" hidden></section>
+        <section class="communities-view" id="communitiesView" hidden></section>
+      </div>
+    </main>
+
+    <aside class="askpanel" aria-label="问答">
+      <div class="ask-head">
+        <div>
+          <div class="eyebrow">ASK</div>
+          <h2>向资料提问</h2>
+        </div>
+        <span class="mode-pill" id="modePill">图谱增强 · 精排 · 带证据</span>
+      </div>
+
+      <div class="examples" id="examples"></div>
+
+      <div class="question-wrap">
+        <textarea id="question" rows="2" placeholder="例如：远山项目现在的技术路线是什么？" aria-label="问题"></textarea>
+        <div class="question-meta">
+          <span>Enter 发送 · Shift+Enter 换行</span>
+          <span id="questionCount">0/500</span>
+        </div>
+      </div>
+
+      <div class="ask-options">
+        <label class="switch compact">
+          <input type="checkbox" id="externalOnly" checked>
+          <span>仅外发资料 <em>public / open_commercial</em></span>
+        </label>
+        <label class="switch compact">
+          <input type="checkbox" id="useHyde">
+          <span>HyDE <em>多一次模型调用</em></span>
+        </label>
+        <select id="projectFilter" aria-label="项目范围">
+          <option value="">全部项目</option>
+        </select>
+      </div>
+
+      <div class="ask-actions">
+        <button class="primary" id="askBtn">提问</button>
+        <button class="ghost" id="stopBtn" hidden>停止</button>
+        <span class="ask-state" id="askState"></span>
+      </div>
+
+      <div class="ask-scroll" id="askScroll">
+        <div class="answer" id="answerBox" aria-live="polite">
+          <div class="answer-placeholder" id="answerPlaceholder">
+            <p>回答只依据检索到的段落，逐条编号引用；资料不足时会直接说“未提供”。</p>
+            <p class="muted">图谱高亮：提问后，被引用的段落所属的实体节点会亮起来。</p>
+          </div>
+        </div>
+        <div class="version-diag" id="versionDiag" hidden></div>
+        <div class="trace-box" id="traceBox"></div>
+        <div class="sources" id="sourcesBox"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="modal-backdrop" id="settingsModal" hidden>
+  <div class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-head">
+      <div>
+        <div class="eyebrow">CONNECTION</div>
+        <h2 id="settingsTitle">模型设置</h2>
+      </div>
+      <button class="icon-btn close" data-close="settingsModal" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="security-note">
+        <strong>密钥只留在本机。</strong>
+        <span>写入 <code>.state/secrets.json</code>（权限 <code>0600</code>），只在服务端读取；页面只显示“已保存”，不回显密钥，不写入日志，也不发给除该端点以外的任何服务。</span>
+      </div>
+      <form id="settingsForm" autocomplete="off">
+        <label class="field">
+          <span>模型端点 Base URL <em>OpenAI 兼容，通常以 /v1 结尾</em></span>
+          <input id="baseUrl" type="url" required spellcheck="false" placeholder="https://api.siliconflow.cn/v1">
+        </label>
+        <label class="field">
+          <span>API Key <em id="keyState">尚未保存</em></span>
+          <input id="apiKey" type="password" spellcheck="false" autocomplete="new-password" placeholder="粘贴新密钥以替换（不会回显）">
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span>回答模型</span>
+            <input id="answerModel" type="text" required spellcheck="false" placeholder="deepseek-ai/DeepSeek-V4.1-Flash">
+          </label>
+          <label class="field">
+            <span>图谱抽取模型 <em>可更便宜</em></span>
+            <input id="extractionModel" type="text" required spellcheck="false" placeholder="同回答模型">
+          </label>
+        </div>
+        <div class="provider-hint">
+          <div><span>向量层</span><strong>local-hash · 1024 维 · 离线</strong></div>
+          <div><span>说明</span><strong>复用仓库的 ingest / graph / retrieve / answer 路径，没有引入 Agent 框架。</strong></div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="primary" id="saveSettings">保存</button>
+          <button type="button" class="ghost" id="saveTest">保存并测试连接</button>
+          <button type="button" class="danger ghost" id="clearKey">清除密钥</button>
+          <span class="test-result" id="testResult"></span>
+        </div>
+      </form>
+      <p class="fineprint">这只是一个本地演示服务，默认只绑定 127.0.0.1。若把服务暴露到局域网，请自行加 TLS 和访问控制。</p>
+    </div>
+  </div>
+</div>
+
+<!-- Build -->
+<div class="modal-backdrop" id="buildModal" hidden>
+  <div class="modal build-modal" role="dialog" aria-modal="true" aria-labelledby="buildTitle">
+    <div class="modal-head">
+      <div>
+        <div class="eyebrow">PIPELINE</div>
+        <h2 id="buildTitle">重建知识库</h2>
+      </div>
+      <button class="icon-btn close" data-close="buildModal" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="build-intro">从固定语料重放文件历史：同一路径的 3 个修订走真实 ingest 版本链，只抽取当前版本；然后做规则/模型项目归属、字面引用与图谱抽取。社区摘要更慢，单独勾选。</p>
+      <div class="build-warning" id="buildWarning" hidden></div>
+      <div class="build-last" id="lastBuild"></div>
+      <label class="switch compact build-option">
+        <input type="checkbox" id="withCommunities">
+        <span>生成社区摘要 <em>每个社区一次模型调用，最多等 120 秒；不勾选会清空现有社区</em></span>
+      </label>
+      <div class="build-status">
+        <div class="build-progress"><div id="buildBar"></div></div>
+        <div class="build-status-line">
+          <strong id="buildPhase">等待开始</strong>
+          <span id="buildElapsed"></span>
+        </div>
+      </div>
+      <div class="build-log" id="buildLog" aria-live="polite"></div>
+      <div class="build-result" id="buildResult" hidden></div>
+      <div class="form-actions">
+        <button class="primary" id="startBuild">开始构建</button>
+        <button class="ghost" id="closeBuild">关闭</button>
+        <span class="test-result" id="buildHint"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+- project: 远山
+  include: ["**/远山项目/**"]
+  priority: 10
+- project: 河图
+  include: ["**/河图项目/**"]
+  priority: 10
