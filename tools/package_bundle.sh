@@ -14,7 +14,7 @@ DIST="${1:-$DEMO_DIR/dist}"
 STAGE="$DIST/pcmem-demo-bundle"
 COMMIT="$(git -C "$REPO" rev-parse --short HEAD)"
 
-if [[ -n "$(git -C "$REPO" status --porcelain)" ]]; then
+if [[ -n "$(git -C "$REPO" status --porcelain --untracked-files=no)" ]]; then
   echo "警告：personal-agent 工作区有未提交改动。"
   echo "bundle 使用 HEAD ($COMMIT)，不会带上这些改动。"
 fi
@@ -25,6 +25,7 @@ mkdir -p "$STAGE/pcmem-demo" "$STAGE/personal-agent"
 # The demo itself: exclude runtime state, the API key, caches, and artifacts.
 rsync -a \
   --exclude '.state/' \
+  --exclude '.git/' \
   --exclude 'dist/' \
   --exclude 'recordings/' \
   --exclude '__pycache__/' \
@@ -102,13 +103,13 @@ No key or database is included in this bundle.
 
 The static, pre-recorded site is included:
 
-```bash
+\`\`\`bash
 cd pcmem-demo/pcmem-static-demo
 python3 -m http.server 8780 --bind 127.0.0.1
 # http://127.0.0.1:8780/
-```
+\`\`\`
 
-It makes no `/api/*` calls and needs no API key. The header labels it as a
+It makes no API calls and needs no API key. The header labels it as a
 static snapshot; the live-only controls are disabled there.
 
 ## Ports and troubleshooting
